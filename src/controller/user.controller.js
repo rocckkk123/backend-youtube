@@ -51,8 +51,9 @@ const user= await User.create(
         fullName,
         email,
         avatar:avatar.url,
-        coverImage:coverImage?.url,
-        username:username.toLowerCase()
+        coverImage:coverImage?.url|| "",
+        username:username.toLowerCase(),
+        password
     }
 )
 
@@ -62,7 +63,7 @@ const user= await User.create(
 if (!createduser) {
     throw new ApiError(500,"something went wrong user is not created")
 }
-return res.status(200).jason(
+return res.status(200).json(
     new ApiResponse(201,createduser,"user created successfully")
 )
 })
