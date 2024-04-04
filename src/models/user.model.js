@@ -21,25 +21,25 @@ const userSchema=new Schema(
         },
         password:{
             type:String,
-            requried:[true,"passwprd is requried"],
+            requried:[true,"password is requried"],
             unqiue:true,
         },
         fullName:{
             type:String,
-            requried:true,
+             requried:true,
             trim:true,
             index:true
         },
         avatar:{
-            typr:String,//cloudinary url
+            type:String,//cloudinary url
             requried:true
         },
         coverImage:{
-            typr:String//cloudinary url
+            type:String//cloudinary url
         },
         watchHistory:[
             {
-                type:Schema.Types.IndexId,
+                type:Schema.Types.ObjectId,
                 ref:"Video"
             }
         ],
@@ -49,7 +49,7 @@ const userSchema=new Schema(
 },{timestamps:true})
 
 userSchema.pre("save",async function(next)  {
-    if(!this.isModified(password)) return next();
+    if(!this.isModified('password')) return next();
 
     this.password= await bcrypt.hash(this.password,10)
     next()
