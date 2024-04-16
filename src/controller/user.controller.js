@@ -3,8 +3,8 @@ import {ApiError} from "../utils/ApiError.js"
 import { User } from "../models/user.model.js";
 import { uploadoncloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { jwt } from "jsonwebtoken";
-import { Mongoose } from "mongoose";
+import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 
 const generateAccessTokenandRefreshToken=async(userId) => {
@@ -16,6 +16,8 @@ const generateAccessTokenandRefreshToken=async(userId) => {
         user.refreshtoken=refreshtoken
         await user.save({ validateBeforeSave:false })
         return{accesstoken,refreshtoken}
+        console.log(accesstoken);
+        console.log(refreshtoken);
     } catch (error) {
         throw new ApiError(500,"something went wrong")
     }
@@ -151,8 +153,8 @@ const logoutUser=asynchandler(async(req,res) =>
    await User.findByIdAndUpdate(
         req.user._id,
         {
-            $set:{
-                refreshtoken:undefined
+            $unset:{
+                refreshtoken:1 //this remove fields from the documents
             }
         },
         {
@@ -171,18 +173,22 @@ const logoutUser=asynchandler(async(req,res) =>
 })
 const refreshAcessToken=asynchandler( async(req,res) => {
     const incomingRefreshToken=req.cookies.refreshtoken||req.body.refreshtoken
-
+//console.log(incomingRefreshToken);
+console.log(generateAccessTokenandRefreshToken);
     if (!incomingRefreshToken) {
         throw new ApiError(401,"invalid request")
     }
     try {
         const decodedToken=jwt.verify(incomingRefreshToken,process.env.REFRESH_TOKEN_SECRET)
-    
+ //  console.log(decodedToken);
         const user=User.findById(decodedToken?._id)
+   //     console.log("user",user);
         if (!user) {
             throw new ApiError(401,"invalid refresh token")        
         }
+     //   console.log(user.refreshtoken);
         if (incomingRefreshToken!== user?.refreshtoken) {
+            console.log(true);
             throw new ApiError(401,"refresh token is expired or used")
         }
         const options={
@@ -209,11 +215,12 @@ const updateCurrentPassword=asynchandler( async(req,res) => {
     const{oldpassword,newpassword}=req.body
     const user=await User.findById(req.user?._id)
     const ispasswordcorresct=await user.isPasswordCorrect(oldpassword)
+    console.log(ispasswordcorresct);
     if (!ispasswordcorresct) {
         throw new ApiError(400,"invalid old password")
 
     }
-    user.password=newpassword
+   // user.password=newpassword
     await user.save({validateBeforeSave:false})
 
     return res
@@ -226,6 +233,7 @@ const getCurrentUser=asynchandler(async(req,res) => {
     .status(200)
     .json(new ApiError(200,req.user,"current user fetched sucessfully"))
 })
+//console.log(getCurrentUser);
 const updateUserDetalis=asynchandler(async(req,res) => {
     const{email,fullName}=req.body
     if (!(fullName||email)) {
@@ -360,7 +368,7 @@ const getUserWatchHistory=asynchandler(async(req,res) => {
     const user=await User.aggregate([
         {
             $match:{
-                _id:new Mongoose.Types.ObjectId(req.user._id)
+                _id:new mongoose.Types.ObjectId(req.user._id)
             }
             
         },
